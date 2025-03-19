@@ -1,5 +1,4 @@
-const API_KEY = 'VOTRE_CLE_API_GEMINI';
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const API_URL = 'http://127.0.0.1:4891/v1/chat/completions';
 
 document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById('chatMessages');
@@ -32,31 +31,39 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.style.height = 'auto';
 
         try {
-            const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: message
-                        }]
-                    }]
+                    messages: [{
+                        role: "user",
+                        content: message
+                    }],
+                    model: "gpt4all-j",
+                    stream: false
                 })
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             
-            if (data.candidates && data.candidates[0].content) {
-                const aiResponse = data.candidates[0].content.parts[0].text;
+            if (data.choices && data.choices[0].message) {
+                const aiResponse = data.choices[0].message.content;
                 addMessage(aiResponse, 'ai');
             } else {
                 throw new Error('Réponse invalide de l\'API');
             }
         } catch (error) {
-            console.error('Erreur:', error);
-            addMessage('Désolé, une erreur est survenue.', 'ai');
+            console.error('Détails de l\'erreur:', {
+                message: error.message,
+                stack: error.stack
+            });
+            addMessage(`Erreur: ${error.message}`, 'ai');
         }
     }
 
